@@ -11,6 +11,7 @@ class User(BaseMixin, db.Model):
     name = db.Column(db.String(100), unique=True)
     surname = db.Column(db.String(100), unique=True)
     favorite_genre = db.Column(db.String(100))
+    role = db.Column(db.session(50))
 
 
     def __repr__(self):

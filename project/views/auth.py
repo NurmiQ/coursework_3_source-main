@@ -1,117 +1,41 @@
-import calendar
-import datetime
-
-import jwt
-from flask_restx import Resource, Namespace
-from flask import request, abort
-from models import User
-from setup_db import db
-import hashlib
-
+from flask_restx import Resource, Namespace, abort
+from flask import request
+from project.services.users_service import UsersService
+from project.setup_db import db
+from project.tools.security import login_user, refresh_user_token
+from project.exceptions import ItemNotFound
 
 auth_ns = Namespace('auth')
-secret = 's3cR$eT'
-algo = 'HS256'
 
-@auth_ns.route('/')
+
+@auth_ns.route('/login')
 class AuthView(Resource):
     def post(self):
         req_json = request.json
-        username = req_json.get('username', None)
-        password = req_json.get('password', None)
-        if None in [username, password]:
+        if not req_json:
             abort(400)
-
-        user = db.session.query(User).filter(User.username == username).first()
-        if user is None:
-            return {"error": "Неверные учётные данные1"}, 401
-
-        password_hash = hashlib.md5(password.encode('utf-8')).hexdigest()
-        if password_hash != user.password:
-            return {"error": "Неверные учётные данные"}, 401
-
-
-        data = {
-            "username": user.username,
-            "role": user.role
-        }
-
-        min30 = datetime.datetime.utcnow() + datetime.timedelta(minutes=30)
-        data["exp"] = calendar.timegm(min30.timetuple())
-        access_token = jwt.encode(data, secret, algorithm=algo)
-
-        days130 = datetime.datetime.utcnow() + datetime.timedelta(days=130)
-        data["exp"] = calendar.timegm(days130.timetuple())
-        refresh_token = jwt.encode(data, secret, algorithm=algo)
-
-        return {
-            "access_token": access_token,
-            "refresh_token": refresh_token
-        }, 201
-
+        try:
+            user = UsersService(db.session).get_user_by_email(email=req_json.get('email'))
+            tokens = login_user(request.json, user)
+            return tokens, 200
+        except ItemNotFound:
+            abort(401, "Authorization Error")
 
     def put(self):
         req_json = request.json
-        refresh_token = req_json.get('refresh_token', None)
-        if refresh_token is None:
+        if not req_json:
             abort(400)
-
         try:
-            data = jwt.decode(jwt=refresh_token, key=secret, algorithms=[algo])
-        except Exception as e:
+            tokens = refresh_user_token(req_json)
+            return tokens, 200
+        except ItemNotFound:
+            abort(401, "Authorization Error")
+
+
+@auth_ns.route('/register ')
+class AuthView(Resource):
+    def post(self):
+        req_json = request.json
+        if not req_json:
             abort(400)
-
-        username = data.get('username')
-
-        user = db.session.query(User).filter(User.username == username).first()
-
-        data = {
-            "username": user.username,
-            "role": user.role
-        }
-        min30 = datetime.datetime.utcnow() + datetime.timedelta(minutes=30)
-        data["exp"] = calendar.timegm(min30.timetuple())
-        access_token = jwt.encode(data, secret, algorithm=algo)
-
-        days130 = datetime.datetime.utcnow() + datetime.timedelta(days=130)
-        data["exp"] = calendar.timegm(days130.timetuple())
-        refresh_token = jwt.encode(data, secret, algorithm=algo)
-
-        return {
-            "access_token": access_token,
-            "refresh_token": refresh_token
-        }, 201
-
-def auth_required(func):
-    def wrapper(*args, **kwargs):
-        if 'Authorization' not in request.headers:
-            abort(401)
-
-        data = request.headers['Authorization']
-        token = data.split("Bearer ")[-1]
-        try:
-            jwt.decode(token, secret, algorithms=[algo])
-        except Exception as e:
-            print("JWT Decode Exception", e)
-            abort(401)
-        return func(*args, **kwargs)
-
-    return wrapper
-
-def admin_required(func):
-    def wrapper(*args, **kwargs):
-        if 'Authorization' not in request.headers:
-            abort(401)
-
-        data = request.headers['Authorization']
-        token = data.split("Bearer ")[-1]
-        try:
-            user = jwt.decode(token, secret, algorithms=[algo])
-            role = user.get("role")
-            if role == "admin":
-                return func(*args, **kwargs)
-            abort(401, "Admin role required")
-        except Exception as e:
-            print("JWT Decode Exception", e)
-            abort(401)
-    return wrapper
+        return UsersService(db.session).create(req_json)

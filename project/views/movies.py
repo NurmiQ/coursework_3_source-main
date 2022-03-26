@@ -10,8 +10,11 @@ movies_ns = Namespace('movies')
 @movies_ns.route('/')
 class MoviesView(Resource):
     def get(self):
-        def get(self):
-            """Get all movies"""
+        """Get all movies"""
+        req_args = parcer.parse_args()
+        if any (req_args.values()):
+            return MoviesService(db.session).get_filter_movies(req_args)
+        else:
             return MoviesService(db.session).get_all_movies()
 
 
