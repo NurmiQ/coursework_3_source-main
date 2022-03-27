@@ -1,4 +1,4 @@
-from project.config import DevelopmentConfig
+from project.config import DevelopmentConfig, BaseConfig
 from project.dao.models import Genre
 from project.server import create_app, db
 
@@ -30,7 +30,7 @@ def register_extensions(app):
     api.add_namespace(auth_ns)
 
 
-app = create_app(Config())
+app = create_app(BaseConfig())
 app.debug = True
 
 if __name__ == '__main__':

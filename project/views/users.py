@@ -6,12 +6,14 @@ from project.exceptions import ItemNotFound
 from project.schemas.user import UserSchema
 from project.services.users_service import UsersService
 from project.setup_db import db
+from project.tools.security import auth_required
 
 users_ns = Namespace('users')
 
 
 @users_ns.route('/')
 class UsersView(Resource):
+    @auth_required
     def get(self):
         def get(self):
             """Get all users"""
@@ -20,6 +22,7 @@ class UsersView(Resource):
 
 @users_ns.route('/<int:user_id>')
 class UserView(Resource):
+    @auth_required
     def get(self, user_id: int):
         """Get user by id"""
         try:
@@ -41,6 +44,7 @@ class UserView(Resource):
 
 @users_ns.route('password/<int:user_id>')
 class UserView(Resource):
+    @auth_required
     def put(self, user_id):
         req_json = request.json
         if not req_json:

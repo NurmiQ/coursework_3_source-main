@@ -1,3 +1,4 @@
+from flask import request
 from flask_restx import abort, Namespace, Resource
 
 from project.exceptions import ItemNotFound
@@ -7,13 +8,13 @@ from project.setup_db import db
 movies_ns = Namespace('movies')
 
 
-@movies_ns.route('/')
+@movies_ns.route('/<int:page_id>')
 class MoviesView(Resource):
     def get(self):
         """Get all movies"""
-        req_args = parcer.parse_args()
-        if any (req_args.values()):
-            return MoviesService(db.session).get_filter_movies(req_args)
+        req_json = request.json
+        if req_json['page_id']:
+            return MoviesService(db.session).get_filter_movies(req_json)
         else:
             return MoviesService(db.session).get_all_movies()
 
