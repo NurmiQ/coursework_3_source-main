@@ -1,12 +1,12 @@
 from project.config import DevelopmentConfig, BaseConfig
-from project.dao.models import Genre
-from project.server import create_app, db
+
+
 
 from flask import Flask
 from flask_restx import Api
 
-from config import Config
-from project.dao.models.user import User
+
+
 from project.setup_db import db
 from project.views.auth import auth_ns
 from project.views.directors import directors_ns

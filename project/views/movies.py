@@ -8,12 +8,12 @@ from project.setup_db import db
 movies_ns = Namespace('movies')
 
 
-@movies_ns.route('/<int:page_id>')
+@movies_ns.route('/')
 class MoviesView(Resource):
     def get(self):
         """Get all movies"""
         req_json = request.json
-        if req_json['page_id']:
+        if req_json:
             return MoviesService(db.session).get_filter_movies(req_json)
         else:
             return MoviesService(db.session).get_all_movies()
