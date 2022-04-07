@@ -21,7 +21,7 @@ class BaseConfig:
 
 class TestingConfig(BaseConfig):
     TESTING = True
-    SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
+    SQLALCHEMY_DATABASE_URI = '/Users/NurmiQ/PycharmProjects/pythonProject/Homework/coursework_3_source-main/project.db'
 
 
 class DevelopmentConfig(BaseConfig):

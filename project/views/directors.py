@@ -3,12 +3,14 @@ from flask_restx import abort, Namespace, Resource
 from project.exceptions import ItemNotFound
 from project.services.directors_service import DirectorsService
 from project.setup_db import db
+from project.tools.security import auth_required
 
 directors_ns = Namespace('directors')
 
 
 @directors_ns.route('/')
 class DirectorsView(Resource):
+    @auth_required
     def get(self):
         """Get all directors"""
         return DirectorsService(db.session).get_all_directors()
@@ -16,6 +18,7 @@ class DirectorsView(Resource):
 
 @directors_ns.route('/<int:director_id>')
 class DirectorView(Resource):
+    @auth_required
     def get(self, director_id: int):
         """Get director by id"""
         try:
